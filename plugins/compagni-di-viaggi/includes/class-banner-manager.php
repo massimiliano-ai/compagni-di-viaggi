@@ -347,14 +347,17 @@ class CDV_Banner_Manager {
         ));
 
         if ($existing) {
-            // Update
+            // Update - updated_at is auto-updated by database ON UPDATE CURRENT_TIMESTAMP
             $result = $wpdb->update(
                 $table,
-                ['html_code' => $html_code, 'updated_at' => current_time('mysql')],
+                ['html_code' => $html_code],
                 ['id' => $existing->id],
-                ['%s', '%s'],
+                ['%s'],
                 ['%d']
             );
+
+            // For updates, 0 rows affected is still success (data unchanged)
+            $success = ($result !== false);
         } else {
             // Insert
             $result = $wpdb->insert(
@@ -367,12 +370,17 @@ class CDV_Banner_Manager {
                 ],
                 ['%s', '%s', '%s', '%d']
             );
+
+            // For inserts, we need at least 1 row inserted
+            $success = ($result !== false && $result > 0);
         }
 
-        if ($result !== false) {
+        if ($success) {
             wp_send_json_success(['message' => __('Banner salvato con successo', 'compagni-di-viaggi')]);
         } else {
-            wp_send_json_error(['message' => __('Errore durante il salvataggio', 'compagni-di-viaggi')]);
+            // Get last error for debugging
+            $error_msg = $wpdb->last_error ? $wpdb->last_error : __('Errore durante il salvataggio', 'compagni-di-viaggi');
+            wp_send_json_error(['message' => $error_msg]);
         }
     }
 
