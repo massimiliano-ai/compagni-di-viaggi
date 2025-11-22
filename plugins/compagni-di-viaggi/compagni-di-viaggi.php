@@ -103,6 +103,10 @@ class Compagni_Di_Viaggi {
         require_once CDV_PLUGIN_DIR . 'includes/class-analytics.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-analytics-tracking.php';
 
+        // Matching System
+        require_once CDV_PLUGIN_DIR . 'includes/class-user-preferences.php';
+        require_once CDV_PLUGIN_DIR . 'includes/class-matching-algorithm.php';
+
         // REST API
         require_once CDV_PLUGIN_DIR . 'includes/api/class-rest-api.php';
         require_once CDV_PLUGIN_DIR . 'includes/api/class-jwt-auth.php';
@@ -152,6 +156,11 @@ class Compagni_Di_Viaggi {
         CDV_Banner_Manager::init();
         CDV_Analytics::init();
         CDV_Analytics_Tracking::init();
+
+        // Matching System
+        CDV_User_Preferences::init();
+        CDV_Matching_Algorithm::init();
+
         CDV_REST_API::init();
         CDV_Ajax_Handlers::init();
 
