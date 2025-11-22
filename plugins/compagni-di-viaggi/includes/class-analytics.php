@@ -81,8 +81,8 @@ class CDV_Analytics {
      */
     public static function add_admin_menu() {
         add_menu_page(
-            __('Statistiche', 'compagni-di-viaggi'),
-            __('Statistiche', 'compagni-di-viaggi'),
+            __('Analytics', 'compagni-di-viaggi'),
+            __('Analytics', 'compagni-di-viaggi'),
             'manage_options',
             'cdv-analytics',
             [__CLASS__, 'render_analytics_page'],
