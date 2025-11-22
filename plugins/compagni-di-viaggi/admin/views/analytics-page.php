@@ -174,6 +174,71 @@ if (!defined('ABSPATH')) {
         </div>
     </div>
 
+    <!-- Page Views (GDPR Compliant) -->
+    <div class="analytics-overview">
+        <h2>
+            <span class="dashicons dashicons-visibility"></span>
+            <?php _e('Visite Pagine (Tracking GDPR Compliant)', 'compagni-di-viaggi'); ?>
+        </h2>
+
+        <div class="overview-grid">
+            <!-- VISITE TOTALI -->
+            <div class="overview-section">
+                <h3><span class="dashicons dashicons-chart-line"></span> <?php _e('Visite Totali', 'compagni-di-viaggi'); ?></h3>
+                <div class="overview-stats">
+                    <div class="stat-item">
+                        <span class="stat-label"><?php _e('Oggi', 'compagni-di-viaggi'); ?></span>
+                        <span class="stat-value success"><?php echo number_format($stats['total_views_today']); ?></span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label"><?php _e('Questa Settimana', 'compagni-di-viaggi'); ?></span>
+                        <span class="stat-value"><?php echo number_format($stats['total_views_week']); ?></span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label"><?php _e('Questo Mese', 'compagni-di-viaggi'); ?></span>
+                        <span class="stat-value"><?php echo number_format($stats['total_views_month']); ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISITE PER DEVICE -->
+            <div class="overview-section">
+                <h3><span class="dashicons dashicons-smartphone"></span> <?php _e('Visite per Dispositivo', 'compagni-di-viaggi'); ?></h3>
+                <div class="overview-stats">
+                    <?php foreach ($stats['views_by_device'] as $device => $count) : ?>
+                    <div class="stat-item">
+                        <span class="stat-label"><?php echo ucfirst($device); ?></span>
+                        <span class="stat-value"><?php echo number_format($count); ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- VISITE PER REFERRER -->
+            <div class="overview-section">
+                <h3><span class="dashicons dashicons-networking"></span> <?php _e('Sorgenti Traffico', 'compagni-di-viaggi'); ?></h3>
+                <div class="overview-stats">
+                    <?php
+                    $referrer_labels = [
+                        'direct' => 'Diretto',
+                        'search' => 'Motori Ricerca',
+                        'social' => 'Social Media',
+                        'internal' => 'Interno',
+                        'other' => 'Altro'
+                    ];
+                    foreach ($stats['views_by_referrer'] as $referrer => $count) :
+                        $label = $referrer_labels[$referrer] ?? ucfirst($referrer);
+                    ?>
+                    <div class="stat-item">
+                        <span class="stat-label"><?php echo $label; ?></span>
+                        <span class="stat-value"><?php echo number_format($count); ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Charts -->
     <div class="analytics-charts">
         <h2><?php _e('Andamento Temporale', 'compagni-di-viaggi'); ?></h2>
@@ -253,6 +318,75 @@ if (!defined('ABSPATH')) {
                     </tbody>
                 </table>
             </div>
+
+            <!-- Top Viaggi by Views -->
+            <div class="top-box">
+                <h3><span class="dashicons dashicons-visibility"></span> <?php _e('Viaggi Più Visitati', 'compagni-di-viaggi'); ?></h3>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th><?php _e('Viaggio', 'compagni-di-viaggi'); ?></th>
+                            <th><?php _e('Visite', 'compagni-di-viaggi'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($stats['top_viaggi_views'])) : ?>
+                            <tr><td colspan="2"><?php _e('Nessun dato', 'compagni-di-viaggi'); ?></td></tr>
+                        <?php else : ?>
+                            <?php foreach ($stats['top_viaggi_views'] as $viaggio) : ?>
+                                <tr>
+                                    <td>
+                                        <a href="<?php echo get_edit_post_link($viaggio['post_id']); ?>" target="_blank">
+                                            <strong><?php echo esc_html($viaggio['title']); ?></strong>
+                                        </a>
+                                    </td>
+                                    <td><?php echo number_format($viaggio['views']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Top Racconti by Views -->
+            <div class="top-box">
+                <h3><span class="dashicons dashicons-visibility"></span> <?php _e('Racconti Più Visitati', 'compagni-di-viaggi'); ?></h3>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th><?php _e('Racconto', 'compagni-di-viaggi'); ?></th>
+                            <th><?php _e('Visite', 'compagni-di-viaggi'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($stats['top_racconti_views'])) : ?>
+                            <tr><td colspan="2"><?php _e('Nessun dato', 'compagni-di-viaggi'); ?></td></tr>
+                        <?php else : ?>
+                            <?php foreach ($stats['top_racconti_views'] as $racconto) : ?>
+                                <tr>
+                                    <td>
+                                        <a href="<?php echo get_edit_post_link($racconto['post_id']); ?>" target="_blank">
+                                            <strong><?php echo esc_html($racconto['title']); ?></strong>
+                                        </a>
+                                    </td>
+                                    <td><?php echo number_format($racconto['views']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Notice -->
+    <div class="analytics-overview" style="margin-top: 30px;">
+        <div class="notice notice-info inline">
+            <p>
+                <span class="dashicons dashicons-shield" style="color: #667eea;"></span>
+                <strong><?php _e('Tracking GDPR Compliant:', 'compagni-di-viaggi'); ?></strong>
+                <?php _e('Le statistiche delle visite sono raccolte in modo completamente anonimo e conforme al GDPR. Non salviamo IP completi, non usiamo cookie di terze parti, e i dati vengono automaticamente eliminati dopo 90 giorni. Gli utenti possono disattivare il tracking in qualsiasi momento.', 'compagni-di-viaggi'); ?>
+            </p>
         </div>
     </div>
 </div>

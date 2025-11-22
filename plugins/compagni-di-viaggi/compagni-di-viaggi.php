@@ -101,6 +101,7 @@ class Compagni_Di_Viaggi {
         require_once CDV_PLUGIN_DIR . 'includes/class-performance.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-banner-manager.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-analytics.php';
+        require_once CDV_PLUGIN_DIR . 'includes/class-analytics-tracking.php';
 
         // REST API
         require_once CDV_PLUGIN_DIR . 'includes/api/class-rest-api.php';
@@ -150,6 +151,7 @@ class Compagni_Di_Viaggi {
         CDV_Performance::init();
         CDV_Banner_Manager::init();
         CDV_Analytics::init();
+        CDV_Analytics_Tracking::init();
         CDV_REST_API::init();
         CDV_Ajax_Handlers::init();
 
@@ -177,6 +179,7 @@ class Compagni_Di_Viaggi {
         CDV_Database::create_tables();
         CDV_Banner_Manager::create_table();
         CDV_Analytics::create_table();
+        CDV_Analytics_Tracking::create_table();
 
         // Schedule cron jobs
         CDV_Analytics::schedule_cron();

@@ -210,6 +210,15 @@ class CDV_Analytics {
                 // TOP DESTINAZIONI
                 'top_destinations' => self::get_top_destinations(5),
                 'top_travel_types' => self::get_top_travel_types(5),
+
+                // PAGE VIEWS (GDPR compliant tracking)
+                'total_views_today' => self::get_views_today(),
+                'total_views_week' => self::get_views_period(7),
+                'total_views_month' => self::get_views_period(30),
+                'views_by_device' => self::get_views_by_device(30),
+                'views_by_referrer' => self::get_views_by_referrer(30),
+                'top_viaggi_views' => self::get_top_content_views('viaggio', 10),
+                'top_racconti_views' => self::get_top_content_views('racconto', 10),
             ];
 
             set_transient($cache_key, $stats, HOUR_IN_SECONDS);
@@ -689,5 +698,114 @@ class CDV_Analytics {
         }
 
         return $csv;
+    }
+
+    /**
+     * Get page views today
+     */
+    private static function get_views_today() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'cdv_page_views';
+        $today = current_time('Y-m-d');
+
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(view_count) FROM $table WHERE view_date = %s",
+            $today
+        ));
+    }
+
+    /**
+     * Get page views in period
+     */
+    private static function get_views_period($days) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'cdv_page_views';
+        $start_date = date('Y-m-d', strtotime("-{$days} days"));
+
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(view_count) FROM $table WHERE view_date >= %s",
+            $start_date
+        ));
+    }
+
+    /**
+     * Get views by device (last N days)
+     */
+    private static function get_views_by_device($days = 30) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'cdv_page_views';
+        $start_date = date('Y-m-d', strtotime("-{$days} days"));
+
+        $results = $wpdb->get_results($wpdb->prepare(
+            "SELECT device_type, SUM(view_count) as total
+            FROM $table
+            WHERE view_date >= %s
+            GROUP BY device_type",
+            $start_date
+        ), ARRAY_A);
+
+        $views = [];
+        foreach ($results as $row) {
+            $views[$row['device_type']] = (int) $row['total'];
+        }
+
+        return $views;
+    }
+
+    /**
+     * Get views by referrer (last N days)
+     */
+    private static function get_views_by_referrer($days = 30) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'cdv_page_views';
+        $start_date = date('Y-m-d', strtotime("-{$days} days"));
+
+        $results = $wpdb->get_results($wpdb->prepare(
+            "SELECT referrer_type, SUM(view_count) as total
+            FROM $table
+            WHERE view_date >= %s
+            GROUP BY referrer_type",
+            $start_date
+        ), ARRAY_A);
+
+        $views = [];
+        foreach ($results as $row) {
+            $views[$row['referrer_type']] = (int) $row['total'];
+        }
+
+        return $views;
+    }
+
+    /**
+     * Get top content views (viaggi or racconti)
+     */
+    private static function get_top_content_views($page_type, $limit = 10) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'cdv_page_views';
+
+        $results = $wpdb->get_results($wpdb->prepare(
+            "SELECT post_id, SUM(view_count) as views
+            FROM $table
+            WHERE page_type = %s AND post_id > 0
+            GROUP BY post_id
+            ORDER BY views DESC
+            LIMIT %d",
+            $page_type,
+            $limit
+        ), ARRAY_A);
+
+        $top_content = [];
+        foreach ($results as $row) {
+            $post = get_post($row['post_id']);
+            if ($post) {
+                $top_content[] = [
+                    'post_id' => $row['post_id'],
+                    'title' => $post->post_title,
+                    'views' => (int) $row['views']
+                ];
+            }
+        }
+
+        return $top_content;
     }
 }
