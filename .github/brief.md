@@ -1806,6 +1806,183 @@ Visibile automaticamente nel Dashboard WordPress per amministratori con quick st
 
 ---
 
+### Sistema Tracking Visite (GDPR Compliant)
+**Data Aggiunta:** 2025-11-22
+**Versione:** 1.3.0
+**Classe:** CDV_Analytics_Tracking
+**Tabelle DB:** wp_cdv_page_views
+
+**Descrizione:**
+Sistema di tracking delle visite alle pagine completamente conforme al GDPR. Traccia le visualizzazioni di pagina in modo anonimo senza salvare dati personali o IP completi. Integrato con il sistema Analytics esistente.
+
+**Caratteristiche Privacy (GDPR Compliant):**
+- **IP Anonimizzati**: Solo primi 2 ottetti IPv4 (192.168.x.x → 192.168.0.0) o 48 bit IPv6
+- **Session Hash Giornaliero**: Hash che cambia ogni giorno, impedendo tracking a lungo termine
+- **Nessun Cookie Terze Parti**: Solo cookie tecnici di prima parte
+- **Auto-Cleanup**: Dati eliminati automaticamente dopo 90 giorni
+- **Opt-Out**: Gli utenti possono disattivare il tracking tramite cookie `cdv_analytics_optout`
+- **Nessun PII**: Non vengono salvate informazioni personalmente identificabili
+
+**Funzionalità Tracking:**
+- Visite per tipo di pagina (homepage, viaggi, racconti, archivi, profili)
+- Breakdown per device (Desktop/Tablet/Mobile)
+- Sorgenti traffico (Direct, Search, Social, Internal, Other)
+- Top 10 Viaggi più visitati
+- Top 10 Racconti più visitati
+- Trend giornaliero visite
+- 1 record per sessione/pagina/giorno (no doppi conteggi)
+
+**Metriche Analytics:**
+- Visite totali oggi
+- Visite settimana
+- Visite mese
+- Distribuzione per device
+- Distribuzione per referrer
+- Contenuti più popolari
+
+**Pagine Tracciate:**
+- Homepage (`homepage`)
+- Single Viaggio (`viaggio` + post_id)
+- Single Racconto (`racconto` + post_id)
+- Archivio Viaggi (`archive_viaggi`)
+- Archivio Racconti (`archive_racconti`)
+- Destinazione (`destinazione` + term_id)
+- Tipo Viaggio (`tipo_viaggio` + term_id)
+- Dashboard (`dashboard`)
+- Profilo Utente (`profilo` + user_id)
+- Calendario (`calendario`)
+- Trova Compagni (`trova_compagni`)
+
+**Struttura Database:**
+```sql
+CREATE TABLE wp_cdv_page_views (
+    id bigint(20) AUTO_INCREMENT PRIMARY KEY,
+    view_date date NOT NULL,
+    page_type varchar(50) NOT NULL,
+    post_id bigint(20) DEFAULT NULL,
+    device_type varchar(20) NOT NULL,
+    referrer_type varchar(50) DEFAULT NULL,
+    session_hash varchar(64) NOT NULL,
+    view_count int DEFAULT 1,
+    created_at datetime DEFAULT CURRENT_TIMESTAMP,
+
+    KEY view_date (view_date),
+    KEY page_type (page_type),
+    KEY post_id (post_id),
+    KEY session_date (session_hash, view_date)
+);
+```
+
+**Anonimizzazione IP:**
+```php
+// IPv4: 192.168.1.100 → 192.168.0.0
+// IPv6: 2001:0db8:85a3:0000:0000:8a2e:0370:7334 → 2001:0db8:85a3::
+
+private static function get_anonymized_ip() {
+    $ip = $_SERVER['REMOTE_ADDR'];
+
+    // IPv4: mantiene solo primi 2 ottetti
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        $parts = explode('.', $ip);
+        return $parts[0] . '.' . $parts[1] . '.0.0';
+    }
+
+    // IPv6: mantiene solo primi 48 bit
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        $parts = explode(':', $ip);
+        return implode(':', array_slice($parts, 0, 3)) . '::';
+    }
+}
+```
+
+**Session Hash (Rotating Daily):**
+```php
+// Hash cambia ogni giorno per impedire tracking a lungo termine
+$daily_salt = date('Y-m-d') . wp_salt('auth');
+$hash_input = $anonymized_ip . '|' . $user_agent . '|' . $daily_salt;
+$session_hash = hash('sha256', $hash_input);
+```
+
+**Anti-Doppi Conteggi:**
+Il sistema verifica se la stessa sessione ha già visitato la stessa pagina nello stesso giorno e evita di contare nuovamente la vista.
+
+**Opt-Out Utente:**
+```php
+// L'utente può disattivare il tracking settando questo cookie
+setcookie('cdv_analytics_optout', '1', time() + YEAR_IN_SECONDS, '/');
+
+// Il tracking salta automaticamente se il cookie è presente
+if (isset($_COOKIE['cdv_analytics_optout']) && $_COOKIE['cdv_analytics_optout'] === '1') {
+    return; // Skip tracking
+}
+```
+
+**Retention Policy:**
+Dati eliminati automaticamente dopo 90 giorni via cron job giornaliero:
+```php
+public static function cleanup_old_data() {
+    $retention_days = 90;
+    $delete_before = date('Y-m-d', strtotime("-{$retention_days} days"));
+
+    $wpdb->query("DELETE FROM wp_cdv_page_views WHERE view_date < '$delete_before'");
+}
+```
+
+**Integrazione con Analytics:**
+Le metriche di tracking vengono integrate nella dashboard Analytics esistente:
+- Sezione "Visite Pagine (Tracking GDPR Compliant)"
+- Tabelle "Viaggi Più Visitati" e "Racconti Più Visitati"
+- Privacy notice informativa nella pagina Analytics
+
+**Device Detection:**
+```php
+$device_type = wp_is_mobile() ? 'mobile' : 'desktop';
+if (wp_is_mobile() && self::is_tablet()) {
+    $device_type = 'tablet';
+}
+```
+
+**Referrer Classification:**
+- `direct`: Nessun referrer o referrer vuoto
+- `internal`: Traffico interno al sito
+- `search`: Google, Bing, Yahoo, DuckDuckGo, Yandex, Baidu
+- `social`: Facebook, Twitter, Instagram, LinkedIn, Pinterest, TikTok, YouTube
+- `other`: Altri siti esterni
+
+**Files Creati:**
+- `includes/class-analytics-tracking.php` - Classe tracking GDPR compliant
+
+**Files Modificati:**
+- `includes/class-analytics.php` - Integrazione metriche visite
+- `admin/views/analytics-page.php` - UI sezioni visite e privacy notice
+- `compagni-di-viaggi.php` - Init e create table
+
+**Hook Utilizzati:**
+- `wp` - Track page view su frontend (non-admin)
+- `cdv_daily_analytics_snapshot` - Cleanup dati vecchi
+
+**Utilizzo:**
+Il tracking è automatico su tutte le pagine frontend. Le statistiche sono visibili in:
+1. Admin → Analytics
+2. Sezione "Visite Pagine (Tracking GDPR Compliant)"
+3. Tabelle top content con link ai post
+
+**Privacy Notice:**
+Disclaimer informativo nella pagina Analytics spiega:
+- Tracking completamente anonimo
+- Nessun IP completo salvato
+- Nessun cookie terze parti
+- Auto-cleanup dopo 90 giorni
+- Possibilità opt-out
+
+**Performance:**
+- Lightweight: 1 check + eventuale 1 insert per page view
+- Indexed queries per report veloci
+- Auto-cleanup previene crescita eccessiva database
+- Cache integration con sistema Analytics esistente
+
+---
+
 ### Template per Nuova Funzionalità
 
 ```markdown
@@ -1861,4 +2038,4 @@ GPL v2 or later
 
 **Documento creato il:** 2025-11-22
 **Ultima modifica:** 2025-11-22
-**Versione Brief:** 1.1.0
+**Versione Brief:** 1.3.0
