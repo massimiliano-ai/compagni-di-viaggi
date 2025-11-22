@@ -205,12 +205,18 @@ if (!defined('ABSPATH')) {
             <div class="overview-section">
                 <h3><span class="dashicons dashicons-smartphone"></span> <?php _e('Visite per Dispositivo', 'compagni-di-viaggi'); ?></h3>
                 <div class="overview-stats">
-                    <?php foreach ($stats['views_by_device'] as $device => $count) : ?>
-                    <div class="stat-item">
-                        <span class="stat-label"><?php echo ucfirst($device); ?></span>
-                        <span class="stat-value"><?php echo number_format($count); ?></span>
-                    </div>
-                    <?php endforeach; ?>
+                    <?php if (!empty($stats['views_by_device'])) : ?>
+                        <?php foreach ($stats['views_by_device'] as $device => $count) : ?>
+                        <div class="stat-item">
+                            <span class="stat-label"><?php echo ucfirst($device); ?></span>
+                            <span class="stat-value"><?php echo number_format($count); ?></span>
+                        </div>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <div class="stat-item">
+                            <span class="stat-label"><?php _e('Nessun dato', 'compagni-di-viaggi'); ?></span>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -218,22 +224,28 @@ if (!defined('ABSPATH')) {
             <div class="overview-section">
                 <h3><span class="dashicons dashicons-networking"></span> <?php _e('Sorgenti Traffico', 'compagni-di-viaggi'); ?></h3>
                 <div class="overview-stats">
-                    <?php
-                    $referrer_labels = [
-                        'direct' => 'Diretto',
-                        'search' => 'Motori Ricerca',
-                        'social' => 'Social Media',
-                        'internal' => 'Interno',
-                        'other' => 'Altro'
-                    ];
-                    foreach ($stats['views_by_referrer'] as $referrer => $count) :
-                        $label = $referrer_labels[$referrer] ?? ucfirst($referrer);
-                    ?>
-                    <div class="stat-item">
-                        <span class="stat-label"><?php echo $label; ?></span>
-                        <span class="stat-value"><?php echo number_format($count); ?></span>
-                    </div>
-                    <?php endforeach; ?>
+                    <?php if (!empty($stats['views_by_referrer'])) : ?>
+                        <?php
+                        $referrer_labels = [
+                            'direct' => 'Diretto',
+                            'search' => 'Motori Ricerca',
+                            'social' => 'Social Media',
+                            'internal' => 'Interno',
+                            'other' => 'Altro'
+                        ];
+                        foreach ($stats['views_by_referrer'] as $referrer => $count) :
+                            $label = $referrer_labels[$referrer] ?? ucfirst($referrer);
+                        ?>
+                        <div class="stat-item">
+                            <span class="stat-label"><?php echo $label; ?></span>
+                            <span class="stat-value"><?php echo number_format($count); ?></span>
+                        </div>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <div class="stat-item">
+                            <span class="stat-label"><?php _e('Nessun dato', 'compagni-di-viaggi'); ?></span>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

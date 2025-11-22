@@ -706,12 +706,20 @@ class CDV_Analytics {
     private static function get_views_today() {
         global $wpdb;
         $table = $wpdb->prefix . 'cdv_page_views';
+
+        // Check if table exists
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
+            return 0;
+        }
+
         $today = current_time('Y-m-d');
 
-        return (int) $wpdb->get_var($wpdb->prepare(
+        $result = $wpdb->get_var($wpdb->prepare(
             "SELECT SUM(view_count) FROM $table WHERE view_date = %s",
             $today
         ));
+
+        return $result ? (int) $result : 0;
     }
 
     /**
@@ -720,12 +728,20 @@ class CDV_Analytics {
     private static function get_views_period($days) {
         global $wpdb;
         $table = $wpdb->prefix . 'cdv_page_views';
+
+        // Check if table exists
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
+            return 0;
+        }
+
         $start_date = date('Y-m-d', strtotime("-{$days} days"));
 
-        return (int) $wpdb->get_var($wpdb->prepare(
+        $result = $wpdb->get_var($wpdb->prepare(
             "SELECT SUM(view_count) FROM $table WHERE view_date >= %s",
             $start_date
         ));
+
+        return $result ? (int) $result : 0;
     }
 
     /**
@@ -734,6 +750,12 @@ class CDV_Analytics {
     private static function get_views_by_device($days = 30) {
         global $wpdb;
         $table = $wpdb->prefix . 'cdv_page_views';
+
+        // Check if table exists
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
+            return [];
+        }
+
         $start_date = date('Y-m-d', strtotime("-{$days} days"));
 
         $results = $wpdb->get_results($wpdb->prepare(
@@ -745,8 +767,10 @@ class CDV_Analytics {
         ), ARRAY_A);
 
         $views = [];
-        foreach ($results as $row) {
-            $views[$row['device_type']] = (int) $row['total'];
+        if ($results) {
+            foreach ($results as $row) {
+                $views[$row['device_type']] = (int) $row['total'];
+            }
         }
 
         return $views;
@@ -758,6 +782,12 @@ class CDV_Analytics {
     private static function get_views_by_referrer($days = 30) {
         global $wpdb;
         $table = $wpdb->prefix . 'cdv_page_views';
+
+        // Check if table exists
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
+            return [];
+        }
+
         $start_date = date('Y-m-d', strtotime("-{$days} days"));
 
         $results = $wpdb->get_results($wpdb->prepare(
@@ -769,8 +799,10 @@ class CDV_Analytics {
         ), ARRAY_A);
 
         $views = [];
-        foreach ($results as $row) {
-            $views[$row['referrer_type']] = (int) $row['total'];
+        if ($results) {
+            foreach ($results as $row) {
+                $views[$row['referrer_type']] = (int) $row['total'];
+            }
         }
 
         return $views;
@@ -782,6 +814,11 @@ class CDV_Analytics {
     private static function get_top_content_views($page_type, $limit = 10) {
         global $wpdb;
         $table = $wpdb->prefix . 'cdv_page_views';
+
+        // Check if table exists
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
+            return [];
+        }
 
         $results = $wpdb->get_results($wpdb->prepare(
             "SELECT post_id, SUM(view_count) as views
@@ -795,14 +832,16 @@ class CDV_Analytics {
         ), ARRAY_A);
 
         $top_content = [];
-        foreach ($results as $row) {
-            $post = get_post($row['post_id']);
-            if ($post) {
-                $top_content[] = [
-                    'post_id' => $row['post_id'],
-                    'title' => $post->post_title,
-                    'views' => (int) $row['views']
-                ];
+        if ($results) {
+            foreach ($results as $row) {
+                $post = get_post($row['post_id']);
+                if ($post) {
+                    $top_content[] = [
+                        'post_id' => $row['post_id'],
+                        'title' => $post->post_title,
+                        'views' => (int) $row['views']
+                    ];
+                }
             }
         }
 
