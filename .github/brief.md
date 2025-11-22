@@ -1529,6 +1529,130 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 
 Questo spazio verrà utilizzato per documentare nuove funzionalità aggiunte al sistema.
 
+---
+
+### Sistema Gestione Banner Pubblicitari
+**Data Aggiunta:** 2025-11-22
+**Versione:** 1.1.0
+**Classe:** CDV_Banner_Manager
+**Tabelle DB:** wp_cdv_banners
+
+**Descrizione:**
+Sistema completo per la gestione di banner pubblicitari con supporto multi-dispositivo (Desktop, Tablet, Mobile) e posizionamenti strategici su tutte le pagine principali del sito.
+
+**Funzionalità:**
+- 20+ posizioni predefinite (Homepage, Archivi, Single, Dashboard, Profilo, Calendario)
+- Gestione responsive: codice HTML separato per Desktop/Tablet/Mobile
+- Editor codice per inserimento HTML/iframe/JavaScript
+- Toggle attivo/disattivo per ogni banner
+- Shortcode per inserimento manuale: `[cdv_banner position="nome_posizione"]`
+- Statistiche performance: impressioni e click
+- Anteprima banner prima del salvataggio
+- Auto-detection device per visualizzazione corretta
+- Sistema di tracking impressioni
+
+**Posizioni Banner Disponibili:**
+
+*Homepage:*
+- `homepage_hero_top` - Banner sopra hero section
+- `homepage_hero_bottom` - Banner sotto hero section
+- `homepage_viaggi_top` - Banner sopra viaggi in evidenza
+
+*Archivio Viaggi:*
+- `archive_viaggi_top` - Banner top archivio
+- `archive_viaggi_sidebar` - Banner sidebar
+- `archive_viaggi_mid` - Banner metà griglia (dopo 6 cards)
+
+*Single Viaggio:*
+- `single_viaggio_top` - Banner sotto titolo
+- `single_viaggio_sidebar` - Banner sidebar
+- `single_viaggio_bottom` - Banner prima commenti
+
+*Archivio Racconti:*
+- `archive_racconti_top` - Banner top archivio
+- `archive_racconti_sidebar` - Banner sidebar
+- `archive_racconti_mid` - Banner metà griglia
+
+*Single Racconto:*
+- `single_racconto_top` - Banner sotto titolo
+- `single_racconto_mid` - Banner mid-content
+- `single_racconto_bottom` - Banner fine articolo
+
+*Dashboard & Profilo:*
+- `dashboard_top` - Banner top dashboard
+- `dashboard_sidebar` - Banner sidebar dashboard
+- `profilo_top` - Banner top profilo
+- `profilo_bottom` - Banner sotto recensioni
+
+*Calendario:*
+- `calendario_top` - Banner sopra calendario
+
+**Endpoint API:**
+Nessun endpoint REST API (solo admin panel)
+
+**AJAX Endpoints:**
+- `cdv_save_banner` - Salva/Aggiorna banner
+- `cdv_toggle_banner` - Attiva/Disattiva banner
+
+**Meta Associati:**
+Nessun meta (storage in tabella dedicata)
+
+**Hook Utilizzati:**
+- `admin_menu` - Aggiunge menu "Banner ADV"
+- `admin_enqueue_scripts` - Carica CSS/JS admin
+- `wp_enqueue_scripts` - Carica CSS frontend
+
+**Shortcode:**
+```php
+[cdv_banner position="homepage_hero_top"]
+[cdv_banner position="single_viaggio_sidebar"]
+```
+
+**Struttura Database:**
+```sql
+CREATE TABLE wp_cdv_banners (
+    id bigint(20) AUTO_INCREMENT PRIMARY KEY,
+    position_key varchar(100) NOT NULL,
+    device varchar(20) NOT NULL,  -- desktop/tablet/mobile
+    is_active tinyint(1) DEFAULT 1,
+    html_code text,
+    css_custom text,
+    display_conditions JSON,
+    start_date datetime DEFAULT NULL,
+    end_date datetime DEFAULT NULL,
+    click_count int DEFAULT 0,
+    impression_count int DEFAULT 0,
+    created_at datetime DEFAULT CURRENT_TIMESTAMP,
+    updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    KEY position_device (position_key, device),
+    KEY is_active (is_active)
+);
+```
+
+**Files Creati:**
+- `includes/class-banner-manager.php` - Classe principale
+- `admin/views/banner-position-card.php` - Template card posizione
+- `admin/views/banner-statistics.php` - Template statistiche
+- `admin/css/banner-manager.css` - Stili admin panel
+- `admin/js/banner-manager.js` - JavaScript admin panel
+- `assets/css/banner-frontend.css` - Stili frontend
+
+**Utilizzo:**
+1. Admin → Banner ADV
+2. Espandi posizione desiderata
+3. Scegli device (Desktop/Tablet/Mobile)
+4. Inserisci codice HTML/iframe/script
+5. Attiva toggle
+6. Salva
+
+Oppure via shortcode nei template:
+```php
+<?php echo do_shortcode('[cdv_banner position="homepage_hero_top"]'); ?>
+```
+
+---
+
 ### Template per Nuova Funzionalità
 
 ```markdown
@@ -1584,4 +1708,4 @@ GPL v2 or later
 
 **Documento creato il:** 2025-11-22
 **Ultima modifica:** 2025-11-22
-**Versione Brief:** 1.0.0
+**Versione Brief:** 1.1.0

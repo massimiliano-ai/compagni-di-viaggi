@@ -99,6 +99,7 @@ class Compagni_Di_Viaggi {
         require_once CDV_PLUGIN_DIR . 'includes/class-organizer-stats.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-gdpr.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-performance.php';
+        require_once CDV_PLUGIN_DIR . 'includes/class-banner-manager.php';
 
         // REST API
         require_once CDV_PLUGIN_DIR . 'includes/api/class-rest-api.php';
@@ -146,6 +147,7 @@ class Compagni_Di_Viaggi {
         CDV_Organizer_Stats::init();
         CDV_GDPR::init();
         CDV_Performance::init();
+        CDV_Banner_Manager::init();
         CDV_REST_API::init();
         CDV_Ajax_Handlers::init();
 
@@ -153,6 +155,9 @@ class Compagni_Di_Viaggi {
             CDV_Admin::init();
             CDV_Admin_Approvals::init();
         }
+
+        // Register shortcodes
+        add_shortcode('cdv_banner', ['CDV_Banner_Manager', 'banner_shortcode']);
     }
 
     /**
@@ -168,6 +173,7 @@ class Compagni_Di_Viaggi {
     public function activate() {
         // Create custom database tables
         CDV_Database::create_tables();
+        CDV_Banner_Manager::create_table();
 
         // Register post types and taxonomies
         CDV_Post_Types::init();

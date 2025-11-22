@@ -1,0 +1,94 @@
+/**
+ * Banner Frontend Styles
+ * Stili per la visualizzazione dei banner pubblicitari sul frontend
+ */
+
+/* Banner Wrapper */
+.cdv-banner-wrapper {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.cdv-banner-wrapper img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Posizioni specifiche */
+
+/* Homepage Hero */
+.cdv-banner-wrapper[data-position="homepage_hero_top"],
+.cdv-banner-wrapper[data-position="homepage_hero_bottom"] {
+    max-width: 1200px;
+    margin: 30px auto;
+}
+
+/* Sidebar banners */
+.cdv-banner-wrapper[data-position*="sidebar"] {
+    margin: 20px 0;
+    max-width: 100%;
+}
+
+/* Single post banners */
+.cdv-banner-wrapper[data-position*="single"] {
+    margin: 30px 0;
+    padding: 20px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+/* Archive mid-grid banners */
+.cdv-banner-wrapper[data-position*="_mid"] {
+    grid-column: 1 / -1;
+    margin: 20px 0;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .cdv-banner-wrapper {
+        margin: 15px 0;
+    }
+
+    .cdv-banner-wrapper[data-position*="sidebar"] {
+        display: none; /* Hide sidebar banners on mobile */
+    }
+}
+
+/* Hide based on device */
+@media screen and (min-width: 1025px) {
+    .cdv-banner-wrapper[data-device="tablet"],
+    .cdv-banner-wrapper[data-device="mobile"] {
+        display: none;
+    }
+}
+
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    .cdv-banner-wrapper[data-device="desktop"],
+    .cdv-banner-wrapper[data-device="mobile"] {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .cdv-banner-wrapper[data-device="desktop"],
+    .cdv-banner-wrapper[data-device="tablet"] {
+        display: none;
+    }
+}
+
+/* Banner loading animation */
+.cdv-banner-wrapper.loading {
+    min-height: 100px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
