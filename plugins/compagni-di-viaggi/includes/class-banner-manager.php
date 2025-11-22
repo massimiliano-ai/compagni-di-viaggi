@@ -417,6 +417,9 @@ class CDV_Banner_Manager {
                 ['%d'],
                 ['%s', '%s']
             );
+
+            // For updates, false means error, 0 or positive means success
+            $success = ($result !== false);
         } else {
             // Insert new banner record with default values
             $result = $wpdb->insert(
@@ -429,12 +432,17 @@ class CDV_Banner_Manager {
                 ],
                 ['%s', '%s', '%d', '%s']
             );
+
+            // For inserts, we need at least 1 row inserted
+            $success = ($result !== false && $result > 0);
         }
 
-        if ($result !== false) {
+        if ($success) {
             wp_send_json_success(['message' => __('Stato aggiornato', 'compagni-di-viaggi')]);
         } else {
-            wp_send_json_error(['message' => __('Errore durante l\'aggiornamento', 'compagni-di-viaggi')]);
+            // Get detailed error message
+            $error_msg = $wpdb->last_error ? $wpdb->last_error : __('Errore durante l\'aggiornamento', 'compagni-di-viaggi');
+            wp_send_json_error(['message' => $error_msg]);
         }
     }
 
