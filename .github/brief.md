@@ -1653,6 +1653,159 @@ Oppure via shortcode nei template:
 
 ---
 
+### Sistema Analytics Avanzato
+**Data Aggiunta:** 2025-11-22
+**Versione:** 1.2.0
+**Classe:** CDV_Analytics
+**Tabelle DB:** wp_cdv_analytics_snapshots
+
+**Descrizione:**
+Sistema di statistiche avanzato basato su snapshot giornalieri per monitorare performance della piattaforma senza creare log pesanti. Utilizza aggregazione dati e cache per performance ottimali.
+
+**Funzionalità:**
+- Dashboard widget con statistiche principali (Utenti, Viaggi, Partecipazioni, Recensioni)
+- Pagina analytics completa con grafici interattivi (Chart.js)
+- Snapshot giornalieri automatici via WP-Cron (1 record/giorno invece di milioni di log)
+- Selezione periodo: 7, 30, 90 giorni
+- Export dati in CSV e JSON
+- Metriche aggregate real-time con sistema di cache (24h transient)
+- Grafici trend per: Nuovi utenti, Nuovi viaggi, Nuove partecipazioni, Nuove recensioni
+- Top 10 destinazioni e tipi di viaggio più popolari
+
+**Metriche Monitorate:**
+
+*Utenti:*
+- Totali, Verificati, In attesa verifica
+- Nuovi utenti (periodo selezionato)
+- Completamento profilo medio (%)
+
+*Viaggi:*
+- Aperti, In corso, Completati, Bozza
+- Nuovi viaggi pubblicati (periodo)
+- Media partecipanti per viaggio
+- Tasso occupazione posti (%)
+
+*Engagement:*
+- Partecipazioni totali/accettate/in attesa
+- Tasso di accettazione (%)
+- Nuove partecipazioni (periodo)
+
+*Recensioni:*
+- Totali recensioni
+- Rating medio globale
+- Nuove recensioni (periodo)
+
+*Messaggistica:*
+- Conversazioni attive
+- Messaggi totali
+- Nuovi messaggi (periodo)
+
+*Conversioni:*
+- % profili completi
+- % viaggi con almeno 1 partecipante
+- % partecipazioni accettate
+
+**Dashboard Widget:**
+Aggiunto nel Dashboard WordPress con le 4 metriche principali più importanti in un layout a griglia responsive.
+
+**Pagina Analytics:**
+Menu dedicato "Analytics" in amministrazione con:
+- Header con selettore periodo e pulsanti export
+- Overview grid (6 sezioni stats)
+- Charts grid (4 grafici trend)
+- Top lists (Destinazioni e Tipi viaggio più popolari)
+
+**AJAX Endpoints:**
+- `cdv_get_chart_data` - Carica dati per grafici (con parametri metric e period)
+- `cdv_export_analytics` - Esporta dati in CSV o JSON
+
+**Hook Utilizzati:**
+- `admin_menu` - Aggiunge menu "Analytics"
+- `wp_dashboard_setup` - Aggiunge widget dashboard
+- `admin_enqueue_scripts` - Carica CSS/JS e Chart.js
+- `cdv_daily_analytics_snapshot` - Cron job giornaliero (4:00 AM)
+
+**Cron Jobs:**
+- **Evento:** `cdv_daily_analytics_snapshot`
+- **Frequenza:** Giornaliera (4:00 AM)
+- **Funzione:** `CDV_Analytics::save_daily_snapshot()`
+- **Scopo:** Salva snapshot giornaliero invece di logging continuo
+
+**Struttura Database:**
+```sql
+CREATE TABLE wp_cdv_analytics_snapshots (
+    id bigint(20) AUTO_INCREMENT PRIMARY KEY,
+    snapshot_date date NOT NULL,
+    metric_type varchar(50) NOT NULL,
+    metric_value decimal(10,2) NOT NULL,
+    metadata JSON,
+    created_at datetime DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE KEY snapshot_metric (snapshot_date, metric_type),
+    KEY snapshot_date (snapshot_date),
+    KEY metric_type (metric_type)
+);
+```
+
+**Sistema di Cache:**
+- Transient API WordPress (24h TTL)
+- Key: `cdv_analytics_overview_stats`
+- Invalidazione: Automatica dopo 24h o save_daily_snapshot()
+- Benefici: Riduce query DB da ~20 a 0 per richiesta
+
+**Approccio Lightweight:**
+Invece di tracciare ogni azione in tempo reale (approccio log-heavy):
+- ❌ Log ogni visualizzazione pagina → milioni di record/mese
+- ❌ Log ogni click → milioni di record/mese
+- ✅ Snapshot giornaliero aggregato → ~50 record/giorno
+- ✅ Cache 24h per stats real-time → 0 query su richieste successive
+
+**Grafici Chart.js:**
+- Line charts con riempimento area
+- Responsive e interattivi
+- Tooltip con valori
+- Animazioni smooth
+- Colori brand-consistent
+
+**Export Funzionalità:**
+```javascript
+// CSV Export
+Data,Utenti Totali,Viaggi Attivi,Partecipazioni,...
+2025-11-22,1523,342,892,...
+
+// JSON Export
+{
+  "date": "2025-11-22",
+  "users_total": 1523,
+  "viaggi_active": 342,
+  ...
+}
+```
+
+**Files Creati:**
+- `includes/class-analytics.php` - Classe principale con logica
+- `admin/views/analytics-dashboard-widget.php` - Widget dashboard
+- `admin/views/analytics-page.php` - Pagina analytics completa
+- `admin/css/analytics.css` - Stili analytics
+- `admin/js/analytics.js` - Chart.js integration e export
+
+**Utilizzo:**
+1. Admin → Analytics (menu principale)
+2. Seleziona periodo (7/30/90 giorni)
+3. Visualizza grafici trend e statistiche
+4. Export CSV o JSON se necessario
+
+**Widget Dashboard:**
+Visibile automaticamente nel Dashboard WordPress per amministratori con quick stats.
+
+**Performance:**
+- Prima richiesta: ~20 query DB (poi cache)
+- Richieste successive: 0 query (24h cache)
+- Storage: ~50 records/giorno = ~18,000/anno (vs milioni con logging)
+- Cron job: 1 volta/giorno (basso impatto)
+
+---
+
 ### Template per Nuova Funzionalità
 
 ```markdown

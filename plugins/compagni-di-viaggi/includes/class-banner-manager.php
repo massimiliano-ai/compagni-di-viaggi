@@ -393,13 +393,35 @@ class CDV_Banner_Manager {
         global $wpdb;
         $table = $wpdb->prefix . 'cdv_banners';
 
-        $result = $wpdb->update(
-            $table,
-            ['is_active' => $is_active],
-            ['position_key' => $position, 'device' => $device],
-            ['%d'],
-            ['%s', '%s']
-        );
+        // Check if banner exists
+        $exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $table WHERE position_key = %s AND device = %s",
+            $position,
+            $device
+        ));
+
+        if ($exists) {
+            // Update existing banner
+            $result = $wpdb->update(
+                $table,
+                ['is_active' => $is_active],
+                ['position_key' => $position, 'device' => $device],
+                ['%d'],
+                ['%s', '%s']
+            );
+        } else {
+            // Insert new banner record with default values
+            $result = $wpdb->insert(
+                $table,
+                [
+                    'position_key' => $position,
+                    'device' => $device,
+                    'is_active' => $is_active,
+                    'html_code' => ''
+                ],
+                ['%s', '%s', '%d', '%s']
+            );
+        }
 
         if ($result !== false) {
             wp_send_json_success(['message' => __('Stato aggiornato', 'compagni-di-viaggi')]);
