@@ -83,6 +83,24 @@ function cdv_enqueue_scripts() {
     if (is_singular() && comments_open() && get_option('thread_comments')) {
         wp_enqueue_script('comment-reply');
     }
+
+    // Matching System (page template: trova-compagni)
+    if (is_page_template('page-trova-compagni.php')) {
+        wp_enqueue_style('cdv-matching', get_template_directory_uri() . '/assets/css/matching.css', array(), CDV_THEME_VERSION);
+
+        wp_enqueue_script('cdv-matching', get_template_directory_uri() . '/assets/js/matching.js', array('jquery'), CDV_THEME_VERSION, true);
+
+        wp_localize_script('cdv-matching', 'cdvMatching', array(
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('cdv_matching_nonce'),
+            'defaultAvatar' => get_avatar_url(0),
+            'i18n' => array(
+                'no_common' => __('Nessun interesse in comune', 'compagni-viaggi'),
+                'loading' => __('Caricamento...', 'compagni-viaggi'),
+                'error' => __('Errore durante il caricamento', 'compagni-viaggi')
+            )
+        ));
+    }
 }
 add_action('wp_enqueue_scripts', 'cdv_enqueue_scripts');
 
