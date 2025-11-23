@@ -46,7 +46,17 @@ class CDV_Travel_Moderation {
             return $data;
         }
 
-        // Force pending status
+        // Skip if this is an update to an already-published travel
+        // (Pending Edits system handles this)
+        if (!empty($postarr['ID'])) {
+            $current_status = get_post_status($postarr['ID']);
+            if ($current_status === 'publish') {
+                // Allow the Pending Edits system to handle this
+                return $data;
+            }
+        }
+
+        // Force pending status for NEW travels or unpublished travels
         if ($data['post_status'] === 'publish' || $data['post_status'] === 'auto-draft') {
             $data['post_status'] = 'pending';
         }

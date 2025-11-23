@@ -77,6 +77,7 @@ class Compagni_Di_Viaggi {
         require_once CDV_PLUGIN_DIR . 'includes/class-user-roles.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-registration.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-travel-moderation.php';
+        require_once CDV_PLUGIN_DIR . 'includes/class-pending-edits.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-user-profiles.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-email-verification.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-email-notifications.php';
@@ -140,6 +141,7 @@ class Compagni_Di_Viaggi {
         CDV_User_Roles::init();
         CDV_Registration::init();
         CDV_Travel_Moderation::init();
+        CDV_Pending_Edits::init();
         CDV_User_Profiles::init();
         CDV_Email_Verification::init();
         CDV_Email_Notifications::init();

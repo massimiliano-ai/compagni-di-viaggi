@@ -1,0 +1,207 @@
+/**
+ * Pending Edits Admin Styles
+ * @package Compagni_di_Viaggi
+ * @since 1.7.0
+ */
+
+/* Pending Edits Meta Box */
+.cdv-pending-edits-review {
+    background: #fff5e6;
+    border: 2px solid #f0ad4e;
+    border-radius: 8px;
+    padding: 20px;
+    margin: -6px -12px -12px;
+}
+
+.pending-edits-header {
+    background: #fff;
+    border-left: 4px solid #f0ad4e;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.pending-edits-header p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.pending-edits-comparison {
+    background: #fff;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.pending-edits-comparison h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #23282d;
+    font-size: 16px;
+}
+
+.pending-edits-comparison table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.pending-edits-comparison table th {
+    background: #f7f7f7;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+}
+
+.pending-edits-comparison table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+}
+
+.pending-edits-comparison tr.changed-field {
+    background: #fff9e6;
+}
+
+.pending-edits-comparison tr.changed-field:hover {
+    background: #fff3cc;
+}
+
+.pending-edits-comparison td.new-value {
+    background: #e7f5e7;
+    font-weight: 500;
+    position: relative;
+}
+
+.pending-edits-comparison td.new-value::before {
+    content: "→";
+    position: absolute;
+    left: -15px;
+    color: #46b450;
+    font-weight: bold;
+}
+
+.pending-edits-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    padding: 20px;
+    background: #fff;
+    border-radius: 4px;
+}
+
+.pending-edits-actions button {
+    min-width: 200px;
+    padding: 12px 24px !important;
+    font-size: 15px !important;
+    height: auto !important;
+}
+
+#cdv-approve-edits {
+    background: #46b450;
+    border-color: #46b450;
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(70, 180, 80, 0.3);
+}
+
+#cdv-approve-edits:hover {
+    background: #3ea842;
+    border-color: #3ea842;
+    box-shadow: 0 3px 6px rgba(70, 180, 80, 0.4);
+}
+
+#cdv-reject-edits {
+    background: #dc3232;
+    border-color: #dc3232;
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(220, 50, 50, 0.3);
+}
+
+#cdv-reject-edits:hover {
+    background: #c72c2c;
+    border-color: #c72c2c;
+    box-shadow: 0 3px 6px rgba(220, 50, 50, 0.4);
+}
+
+/* Loading State */
+.pending-edits-actions button.loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.pending-edits-actions button.loading::after {
+    content: "";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+/* Success/Error Messages */
+.cdv-pending-message {
+    padding: 12px 20px;
+    border-radius: 4px;
+    margin: 15px 0;
+    display: none;
+}
+
+.cdv-pending-message.success {
+    background: #ecf7ed;
+    border-left: 4px solid #46b450;
+    color: #2e7d32;
+    display: block;
+}
+
+.cdv-pending-message.error {
+    background: #fdecea;
+    border-left: 4px solid #dc3232;
+    color: #c62828;
+    display: block;
+}
+
+/* Admin List Badge */
+.cdv-pending-badge {
+    display: inline-block;
+    background: #f0ad4e;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .pending-edits-actions {
+        flex-direction: column;
+    }
+
+    .pending-edits-actions button {
+        width: 100%;
+    }
+
+    .pending-edits-comparison table {
+        font-size: 13px;
+    }
+
+    .pending-edits-comparison table th,
+    .pending-edits-comparison table td {
+        padding: 8px;
+    }
+}
