@@ -227,6 +227,16 @@ class CDV_Travel_Feed {
         $stories_data = array();
 
         foreach ($stories as $story) {
+            // Calculate reading time safely
+            $reading_time = 1;
+            if (function_exists('cdv_reading_time')) {
+                $reading_time = cdv_reading_time($story->ID);
+            } else {
+                // Fallback calculation
+                $word_count = str_word_count(strip_tags($story->post_content));
+                $reading_time = max(ceil($word_count / 200), 1);
+            }
+
             $stories_data[] = array(
                 'id' => $story->ID,
                 'title' => $story->post_title,
@@ -239,7 +249,7 @@ class CDV_Travel_Feed {
                 ),
                 'date' => get_the_date('', $story->ID),
                 'url' => get_permalink($story->ID),
-                'reading_time' => cdv_reading_time($story->ID)
+                'reading_time' => $reading_time
             );
         }
 
@@ -408,13 +418,14 @@ class CDV_Travel_Feed {
 
         $matched = array_intersect($user_groups, $travel_terms);
 
-        // Get group names
-        $all_groups = CDV_Interest_Groups::get_all_groups();
+        // Get group names safely
         $matched_names = array();
-
-        foreach ($matched as $group_key) {
-            if (isset($all_groups[$group_key])) {
-                $matched_names[] = $all_groups[$group_key]['name'];
+        if (class_exists('CDV_Interest_Groups')) {
+            $all_groups = CDV_Interest_Groups::get_all_groups();
+            foreach ($matched as $group_key) {
+                if (isset($all_groups[$group_key])) {
+                    $matched_names[] = $all_groups[$group_key]['name'];
+                }
             }
         }
 
@@ -430,6 +441,12 @@ class CDV_Travel_Feed {
     public static function get_travel_card_data($travel_id) {
         $organizer_id = get_post_field('post_author', $travel_id);
 
+        // Get participant count safely
+        $current_participants = 0;
+        if (class_exists('CDV_Participants')) {
+            $current_participants = CDV_Participants::get_participant_count($travel_id, 'accepted');
+        }
+
         return array(
             'id' => $travel_id,
             'title' => get_the_title($travel_id),
@@ -442,7 +459,7 @@ class CDV_Travel_Feed {
             'end_date' => get_post_meta($travel_id, 'cdv_end_date', true),
             'budget' => get_post_meta($travel_id, 'cdv_budget', true),
             'max_participants' => get_post_meta($travel_id, 'cdv_max_participants', true),
-            'current_participants' => CDV_Participants::get_participant_count($travel_id, 'accepted'),
+            'current_participants' => $current_participants,
             'organizer' => array(
                 'id' => $organizer_id,
                 'name' => get_the_author_meta('display_name', $organizer_id),
