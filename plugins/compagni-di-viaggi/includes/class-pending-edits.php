@@ -42,9 +42,10 @@ class CDV_Pending_Edits {
     }
 
     /**
-     * Store flag for pending edit
+     * Store original data before edits
      */
-    private static $pending_edit_data = null;
+    private static $original_data = null;
+    private static $pending_edit_flag = false;
 
     /**
      * Intercept travel edits before save (wp_insert_post_data filter)
@@ -74,16 +75,25 @@ class CDV_Pending_Edits {
         // Get the original travel data
         $original_post = get_post($postarr['ID']);
 
-        // Store the pending data for later (in save_post hook)
-        self::$pending_edit_data = array(
+        // Store ALL original data (post + meta) for later restoration
+        self::$original_data = array(
             'post_id' => $postarr['ID'],
-            'post_title' => $data['post_title'],
-            'post_content' => $data['post_content'],
-            'submitted_at' => current_time('mysql'),
-            'submitted_by' => get_current_user_id()
+            'post_title' => $original_post->post_title,
+            'post_content' => $original_post->post_content,
+            'meta' => array()
         );
 
-        // Return the ORIGINAL data to prevent the update
+        // Get all meta keys for this post
+        $all_meta = get_post_meta($postarr['ID']);
+        foreach ($all_meta as $key => $value) {
+            // Store original meta values (take first element as get_post_meta returns arrays)
+            self::$original_data['meta'][$key] = is_array($value) && count($value) === 1 ? $value[0] : $value;
+        }
+
+        // Set flag that this is a pending edit
+        self::$pending_edit_flag = true;
+
+        // Return the ORIGINAL data to prevent post update
         $data['post_title'] = $original_post->post_title;
         $data['post_content'] = $original_post->post_content;
 
@@ -91,11 +101,11 @@ class CDV_Pending_Edits {
     }
 
     /**
-     * Save pending edits meta data
+     * Save pending edits and restore original meta (runs LATE after all meta saved)
      */
     public static function save_pending_edits_meta($post_id, $post) {
         // Skip if no pending edit flagged
-        if (self::$pending_edit_data === null || self::$pending_edit_data['post_id'] !== $post_id) {
+        if (!self::$pending_edit_flag || self::$original_data === null || self::$original_data['post_id'] !== $post_id) {
             return;
         }
 
@@ -109,42 +119,73 @@ class CDV_Pending_Edits {
             return;
         }
 
-        // Collect meta fields from POST
-        $meta_fields = array(
-            'cdv_destination',
-            'cdv_country',
-            'cdv_start_date',
-            'cdv_end_date',
-            'cdv_budget_min',
-            'cdv_budget_max',
-            'cdv_max_participants',
-            'cdv_min_age',
-            'cdv_max_age',
-            'cdv_travel_style',
-            'cdv_activity_level',
-            'cdv_accommodation_type',
-            'cdv_transport_mode',
-            'cdv_interest_groups'
-        );
+        // At this point, WordPress has already saved all the NEW meta values
+        // We need to:
+        // 1. Capture the NEW values (from database, just saved by WordPress)
+        // 2. Store them as pending
+        // 3. Restore the ORIGINAL values
 
+        // Get the NEW meta values (just saved by WordPress)
+        $new_meta = get_post_meta($post_id);
         $pending_meta = array();
-        foreach ($meta_fields as $field) {
-            if (isset($_POST[$field])) {
-                $pending_meta[$field] = $_POST[$field];
+
+        foreach ($new_meta as $key => $value) {
+            // Skip our own pending edits meta
+            if ($key === 'cdv_pending_edits') {
+                continue;
+            }
+
+            // Store new value
+            $new_value = is_array($value) && count($value) === 1 ? $value[0] : $value;
+
+            // Only store if changed from original
+            $original_value = isset(self::$original_data['meta'][$key]) ? self::$original_data['meta'][$key] : null;
+
+            if ($new_value !== $original_value) {
+                $pending_meta[$key] = $new_value;
             }
         }
 
+        // Get new post data from database (in case it was updated despite our interception)
+        $current_post = get_post($post_id);
+
         // Build complete pending data
         $pending_data = array(
-            'post_title' => self::$pending_edit_data['post_title'],
-            'post_content' => self::$pending_edit_data['post_content'],
+            'post_title' => $current_post->post_title,
+            'post_content' => $current_post->post_content,
             'meta' => $pending_meta,
-            'submitted_at' => self::$pending_edit_data['submitted_at'],
-            'submitted_by' => self::$pending_edit_data['submitted_by']
+            'submitted_at' => current_time('mysql'),
+            'submitted_by' => get_current_user_id()
         );
 
-        // Save pending edits to post meta
+        // Save pending edits to post meta (use direct query to avoid recursion)
         update_post_meta($post_id, 'cdv_pending_edits', $pending_data);
+
+        // Now RESTORE all original values
+        // First, restore post title and content if they were changed
+        if ($current_post->post_title !== self::$original_data['post_title'] ||
+            $current_post->post_content !== self::$original_data['post_content']) {
+
+            remove_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 10);
+
+            wp_update_post(array(
+                'ID' => $post_id,
+                'post_title' => self::$original_data['post_title'],
+                'post_content' => self::$original_data['post_content'],
+            ), false, false); // false, false = don't fire hooks
+
+            add_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 10, 2);
+        }
+
+        // Restore all original meta values
+        foreach (self::$original_data['meta'] as $meta_key => $meta_value) {
+            // Skip our pending edits meta
+            if ($meta_key === 'cdv_pending_edits') {
+                continue;
+            }
+
+            update_post_meta($post_id, $meta_key, $meta_value);
+        }
 
         // Send notification to admin
         self::notify_admin_new_edits($post_id);
@@ -152,8 +193,9 @@ class CDV_Pending_Edits {
         // Set user notification
         set_transient('cdv_pending_edits_notice_' . get_current_user_id(), $post_id, 60);
 
-        // Clear the flag
-        self::$pending_edit_data = null;
+        // Clear the flags
+        self::$original_data = null;
+        self::$pending_edit_flag = false;
     }
 
     /**
@@ -169,6 +211,47 @@ class CDV_Pending_Edits {
      */
     public static function get_pending_edits($post_id) {
         return get_post_meta($post_id, 'cdv_pending_edits', true);
+    }
+
+    /**
+     * Format meta value for display
+     */
+    private static function format_meta_value_for_display($value) {
+        if (is_array($value)) {
+            // Handle serialized arrays
+            if (count($value) === 0) {
+                return '(vuoto)';
+            }
+
+            // Check if it's a simple array or nested
+            $is_simple = true;
+            foreach ($value as $item) {
+                if (is_array($item) || is_object($item)) {
+                    $is_simple = false;
+                    break;
+                }
+            }
+
+            if ($is_simple) {
+                return implode(', ', $value);
+            } else {
+                // Complex array - show JSON
+                return json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            }
+        } elseif (is_object($value)) {
+            return json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        } elseif ($value === '' || $value === null) {
+            return '(vuoto)';
+        } elseif (is_bool($value)) {
+            return $value ? 'Sì' : 'No';
+        } else {
+            // Limit length for very long strings
+            $str = (string) $value;
+            if (strlen($str) > 200) {
+                return substr($str, 0, 200) . '...';
+            }
+            return $str;
+        }
     }
 
     /**
@@ -248,6 +331,7 @@ class CDV_Pending_Edits {
 
                         <!-- Meta Fields -->
                         <?php
+                        // Friendly labels for known fields
                         $meta_labels = array(
                             'cdv_destination' => 'Destinazione',
                             'cdv_country' => 'Paese',
@@ -265,29 +349,38 @@ class CDV_Pending_Edits {
                             'cdv_interest_groups' => 'Gruppi di Interesse'
                         );
 
-                        foreach ($meta_labels as $meta_key => $label) :
-                            $current_value = get_post_meta($post->ID, $meta_key, true);
-                            $pending_value = isset($pending['meta'][$meta_key]) ? $pending['meta'][$meta_key] : '';
+                        // Loop through ALL changed meta (including ACF fields)
+                        if (!empty($pending['meta'])) :
+                            foreach ($pending['meta'] as $meta_key => $pending_value) :
+                                // Skip internal WordPress/ACF meta
+                                if (substr($meta_key, 0, 1) === '_') {
+                                    continue;
+                                }
 
-                            // Skip if unchanged
-                            if ($current_value === $pending_value) {
-                                continue;
-                            }
+                                // Get current value
+                                $current_value = get_post_meta($post->ID, $meta_key, true);
 
-                            // Format values for display
-                            if (is_array($current_value)) {
-                                $current_value = implode(', ', $current_value);
-                            }
-                            if (is_array($pending_value)) {
-                                $pending_value = implode(', ', $pending_value);
-                            }
+                                // Get friendly label (or use meta key if not found)
+                                $label = isset($meta_labels[$meta_key]) ? $meta_labels[$meta_key] : ucwords(str_replace('_', ' ', $meta_key));
+
+                                // Format values for display
+                                $current_display = self::format_meta_value_for_display($current_value);
+                                $pending_display = self::format_meta_value_for_display($pending_value);
+
+                                // Skip if values are the same
+                                if ($current_display === $pending_display) {
+                                    continue;
+                                }
+                            ?>
+                            <tr class="changed-field">
+                                <td><strong><?php echo esc_html($label); ?></strong></td>
+                                <td><?php echo esc_html($current_display); ?></td>
+                                <td class="new-value"><?php echo esc_html($pending_display); ?></td>
+                            </tr>
+                            <?php
+                            endforeach;
+                        endif;
                         ?>
-                        <tr class="changed-field">
-                            <td><strong><?php echo esc_html($label); ?></strong></td>
-                            <td><?php echo esc_html($current_value); ?></td>
-                            <td class="new-value"><?php echo esc_html($pending_value); ?></td>
-                        </tr>
-                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
