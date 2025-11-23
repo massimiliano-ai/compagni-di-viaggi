@@ -115,6 +115,19 @@ function cdv_enqueue_scripts() {
             'maxGroups' => 3
         ));
     }
+
+    // Travel Feed System (page template: feed-viaggi)
+    if (is_page_template('page-feed-viaggi.php')) {
+        wp_enqueue_style('cdv-feed', get_template_directory_uri() . '/assets/css/feed.css', array(), CDV_THEME_VERSION);
+
+        wp_enqueue_script('cdv-feed', get_template_directory_uri() . '/assets/js/feed.js', array('jquery'), CDV_THEME_VERSION, true);
+
+        wp_localize_script('cdv-feed', 'cdvFeed', array(
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('cdv_feed_nonce'),
+            'isLoggedIn' => is_user_logged_in()
+        ));
+    }
 }
 add_action('wp_enqueue_scripts', 'cdv_enqueue_scripts');
 

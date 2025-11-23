@@ -110,6 +110,9 @@ class Compagni_Di_Viaggi {
         // Interest Groups
         require_once CDV_PLUGIN_DIR . 'includes/class-interest-groups.php';
 
+        // Travel Feed
+        require_once CDV_PLUGIN_DIR . 'includes/class-travel-feed.php';
+
         // REST API
         require_once CDV_PLUGIN_DIR . 'includes/api/class-rest-api.php';
         require_once CDV_PLUGIN_DIR . 'includes/api/class-jwt-auth.php';
@@ -166,6 +169,9 @@ class Compagni_Di_Viaggi {
 
         // Interest Groups
         CDV_Interest_Groups::init();
+
+        // Travel Feed
+        CDV_Travel_Feed::init();
 
         CDV_REST_API::init();
         CDV_Ajax_Handlers::init();
