@@ -1983,6 +1983,230 @@ Disclaimer informativo nella pagina Analytics spiega:
 
 ---
 
+### Sistema Gruppi di Interesse
+**Data Aggiunta:** 2025-11-23
+**Versione:** 1.5.0
+**Classe:** CDV_Interest_Groups
+**Tabelle DB:** Nessuna (usa taxonomy + user meta + options)
+
+**Descrizione:**
+Sistema completo per la gestione di gruppi di interesse tematici. Permette agli utenti di iscriversi a massimo 3 gruppi di interesse per trovare compagni di viaggio con passioni comuni. Ogni gruppo ha un'identità visiva distinta con icone, colori e tag specifici.
+
+**10 Gruppi Predefiniti:**
+1. 📸 **Fotografia** - Viaggi fotografici, workshop, location iconiche
+2. 🥾 **Trekking** - Escursioni, sentieri, montagna
+3. 🏃 **Sport & Avventura** - Attività outdoor, adrenalina, sfide
+4. 🍷 **Enogastronomia** - Tour del gusto, cantine, cucina locale
+5. 🏛️ **Cultura & Storia** - Musei, siti archeologici, patrimonio UNESCO
+6. 🧘 **Benessere & Relax** - Spa, yoga retreat, meditazione
+7. 🎒 **Backpacking** - Viaggi low-cost, ostelli, libertà
+8. 🚗 **Road Trip** - On the road, libertà, scoperta
+9. 🏖️ **Mare & Coste** - Spiagge, snorkeling, vita costiera
+10. 🎨 **Arte & Design** - Gallerie, mostre, architettura
+
+**Funzionalità:**
+- **Limite 3 Gruppi**: Ogni utente può iscriversi a massimo 3 gruppi
+- **Tracking Membri**: Conteggio automatico membri per gruppo (salvato in options)
+- **AJAX Real-time**: Join/Leave senza reload pagina
+- **Validazioni**: Controlli su max gruppi, duplicati, permessi
+- **Member Badges**: Badge "Membro" sui card dei gruppi iscritti
+- **Integrazione Viaggi**: Filtro viaggi per gruppo di interesse
+- **Statistiche Header**: Mostra gruppi attivi, iscrizioni utente, totale membri
+- **Info Section**: Spiegazione funzionamento gruppi con design glassmorphism
+- **Responsive Design**: Layout ottimizzato per mobile/tablet/desktop
+
+**Storage Dati:**
+- **User Meta**: `cdv_interest_groups` - Array con keys dei gruppi (es: ['fotografia', 'trekking'])
+- **Options**: `cdv_group_member_count_{group_key}` - Conteggio membri per gruppo
+- **Taxonomy**: `gruppo_interesse` - Tassonomia WordPress per categorizzare viaggi
+
+**Template Pagina:**
+- File: `page-gruppi-interesse.php`
+- Richiede: Login utente (redirect a login se non autenticato)
+- Layout: Grid responsive 3 colonne (desktop) → 1 colonna (mobile)
+
+**Card Design:**
+Ogni card gruppo include:
+- **Header Gradient**: Colore personalizzato per gruppo
+- **Icona Grande**: Emoji/icon identificativo
+- **Nome Gruppo**: Titolo prominente
+- **Descrizione**: Breve spiegazione interesse
+- **Tag**: Lista parole chiave correlate
+- **Statistiche**: Numero membri attuali
+- **Actions**:
+  - Non iscritto: "Iscriviti" + "Esplora Viaggi"
+  - Iscritto: "Iscritto ✓" + "Vedi Viaggi"
+- **Member Badge**: Badge "⭐ Membro" per gruppi iscritti
+
+**AJAX Endpoints:**
+- `cdv_join_group` - Iscrive utente a gruppo
+  - Nonce: `cdv_groups_nonce`
+  - Params: `group_key`
+  - Response: `{success: true, message: "...", member_count: 123}`
+  - Validazioni: max 3 gruppi, no duplicati, gruppo valido
+
+- `cdv_leave_group` - Rimuove utente da gruppo
+  - Nonce: `cdv_groups_nonce`
+  - Params: `group_key`
+  - Response: `{success: true, message: "...", member_count: 122}`
+  - Conferma: Richiede conferma utente via JavaScript confirm()
+
+- `cdv_get_group_members` - Lista membri gruppo (future use)
+  - Nonce: `cdv_groups_nonce`
+  - Params: `group_key`, `limit` (default: 20)
+  - Response: Array con user data
+
+**Metodi Pubblici:**
+```php
+// Ottiene tutti i gruppi
+CDV_Interest_Groups::get_all_groups()
+
+// Ottiene gruppi dell'utente
+CDV_Interest_Groups::get_user_groups($user_id)
+
+// Verifica se utente è in gruppo
+CDV_Interest_Groups::is_user_in_group($user_id, $group_key)
+
+// Aggiunge utente a gruppo
+CDV_Interest_Groups::add_user_to_group($user_id, $group_key)
+
+// Rimuove utente da gruppo
+CDV_Interest_Groups::remove_user_from_group($user_id, $group_key)
+
+// Ottiene conteggio membri
+CDV_Interest_Groups::get_group_member_count($group_key)
+
+// Ottiene membri di un gruppo
+CDV_Interest_Groups::get_group_members($group_key, $limit = 20)
+```
+
+**Validazioni Automatiche:**
+- ✅ Max 3 gruppi per utente (blocco lato server + client)
+- ✅ Gruppo deve esistere nella lista predefinita
+- ✅ No richieste duplicate (controllo prima di aggiungere)
+- ✅ Utente deve essere autenticato
+- ✅ Nonce security per tutte le richieste AJAX
+- ✅ Auto-reload quando si raggiungono 3 gruppi (per disabilitare altri pulsanti)
+
+**UI/UX Features:**
+- **Toast Notifications**: Messaggi di successo/errore in alto a destra
+  - Verde (#27ae60) per successo
+  - Rosso (#e74c3c) per errori
+  - Auto-dismiss dopo 3 secondi con fade-out
+- **Loading States**: Pulsanti disabilitati durante AJAX con classe .loading
+- **Hover Effects**: Card sollevano e cambiano ombra su hover
+- **Smooth Animations**: Transizioni CSS per tutti gli stati
+- **Disabled States**: Pulsanti "Iscriviti" disabilitati quando max gruppi raggiunto
+
+**Styling (groups.css):**
+- File: `themes/compagni-viaggi/assets/css/groups.css`
+- Linee: 457
+- Features:
+  - Card design moderno con border-radius 16px
+  - Gradient headers personalizzati per gruppo
+  - Hover effects (translateY + box-shadow)
+  - Color-coded badges per gruppi
+  - Responsive grid (3 col → 2 col → 1 col)
+  - Toast notification system
+  - Glassmorphism per info section
+  - Icon sizing e spacing consistente
+
+**JavaScript (groups.js):**
+- File: `themes/compagni-viaggi/assets/js/groups.js`
+- Linee: 212
+- Features:
+  - Event delegation per pulsanti dinamici
+  - AJAX handlers con error handling
+  - Loading state management
+  - UI updates dinamici (pulsanti, badges, contatori)
+  - Validazione client-side max 3 gruppi
+  - Toast notification system
+  - Auto-reload strategico
+
+**Integrazione Viaggi:**
+- Taxonomy `gruppo_interesse` permette di categorizzare viaggi per gruppo
+- Url filtro: `/archivio-viaggi/?gruppo={group_key}`
+- Pulsante "Vedi Viaggi" porta all'archivio filtrato per gruppo
+- Futura implementazione: Auto-suggest gruppi in base a interessi viaggio
+
+**Hook Utilizzati:**
+- `init` - Registra taxonomy `gruppo_interesse`
+- `wp_ajax_cdv_join_group` - Handler join
+- `wp_ajax_cdv_leave_group` - Handler leave
+- `wp_ajax_cdv_get_group_members` - Handler get members
+- `wp_enqueue_scripts` - Enqueue CSS/JS per template
+
+**Enqueue Condizionale:**
+Scripts caricati solo su template `page-gruppi-interesse.php`:
+```php
+wp_enqueue_style('cdv-groups', .../groups.css, [], CDV_THEME_VERSION);
+wp_enqueue_script('cdv-groups', .../groups.js, ['jquery'], CDV_THEME_VERSION, true);
+wp_localize_script('cdv-groups', 'cdvGroups', [
+    'ajaxUrl' => admin_url('admin-ajax.php'),
+    'nonce' => wp_create_nonce('cdv_groups_nonce'),
+    'viaggiUrl' => home_url('/archivio-viaggi/'),
+    'maxGroups' => 3
+]);
+```
+
+**Files Creati:**
+- `plugins/compagni-di-viaggi/includes/class-interest-groups.php` (569 righe)
+- `themes/compagni-viaggi/page-gruppi-interesse.php` (Template pagina)
+- `themes/compagni-viaggi/assets/css/groups.css` (457 righe)
+- `themes/compagni-viaggi/assets/js/groups.js` (212 righe)
+
+**Files Modificati:**
+- `plugins/compagni-di-viaggi/compagni-di-viaggi.php` - Require e init classe
+- `themes/compagni-viaggi/functions.php` - Enqueue scripts
+
+**Utilizzo:**
+1. Crea nuova pagina WordPress
+2. Seleziona template "Gruppi di Interesse"
+3. Pubblica pagina
+4. Utenti possono visitare e iscriversi ai gruppi (max 3)
+5. I gruppi vengono visualizzati nei profili utente
+6. I viaggi possono essere categorizzati per gruppo
+
+**Esempi Dati:**
+```php
+// Struttura gruppo
+[
+    'name' => 'Fotografia',
+    'icon' => '📸',
+    'slug' => 'fotografia',
+    'description' => 'Viaggi fotografici, workshop, location iconiche...',
+    'color' => '#e74c3c',
+    'tags' => ['fotografia', 'photography', 'paesaggi', 'ritratti']
+]
+
+// User meta
+get_user_meta($user_id, 'cdv_interest_groups', true);
+// Returns: ['fotografia', 'trekking', 'benessere']
+
+// Member count
+get_option('cdv_group_member_count_fotografia', 0);
+// Returns: 127
+```
+
+**Roadmap Future:**
+- [ ] Sistema di suggerimenti viaggi basati su gruppi
+- [ ] Feed dedicato per gruppo con ultime attività
+- [ ] Badge speciali per membri attivi di gruppi
+- [ ] Eventi/incontri per gruppo
+- [ ] Chat di gruppo per membri
+- [ ] Statistiche engagement per gruppo
+- [ ] Ranking membri più attivi per gruppo
+
+**Performance:**
+- Lightweight: No tabelle DB aggiuntive
+- User meta: 1 array serializzato per utente
+- Options: 10 contatori (1 per gruppo)
+- AJAX: Singole query ottimizzate
+- Cache: User meta cached by WordPress
+- Indexed: Taxonomy terms indicizzate
+
+---
+
 ### Template per Nuova Funzionalità
 
 ```markdown
