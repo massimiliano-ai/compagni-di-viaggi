@@ -163,11 +163,11 @@ class Compagni_Di_Viaggi {
         CDV_Analytics::init();
         CDV_Analytics_Tracking::init();
 
-        // Matching System - TEMPORARILY DISABLED FOR DEBUGGING
-        // CDV_User_Preferences::init();
-        // CDV_Matching_Algorithm::init();
+        // Matching System
+        CDV_User_Preferences::init();
+        CDV_Matching_Algorithm::init();
 
-        // Interest Groups - TESTING IF THIS CAUSES 403
+        // Interest Groups
         CDV_Interest_Groups::init();
 
         // Travel Feed
