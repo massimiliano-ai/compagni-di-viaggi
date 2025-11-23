@@ -167,8 +167,8 @@ class Compagni_Di_Viaggi {
         CDV_User_Preferences::init();
         CDV_Matching_Algorithm::init();
 
-        // Interest Groups
-        CDV_Interest_Groups::init();
+        // Interest Groups - TEMPORARILY DISABLED FOR DEBUGGING
+        // CDV_Interest_Groups::init();
 
         // Travel Feed - TEMPORARILY DISABLED FOR DEBUGGING
         // CDV_Travel_Feed::init();
