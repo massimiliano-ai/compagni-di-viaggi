@@ -170,8 +170,8 @@ class Compagni_Di_Viaggi {
         // Interest Groups - TEMPORARILY DISABLED FOR DEBUGGING
         // CDV_Interest_Groups::init();
 
-        // Travel Feed - TEMPORARILY DISABLED FOR DEBUGGING
-        // CDV_Travel_Feed::init();
+        // Travel Feed - TESTING IF THIS CAUSES 403
+        CDV_Travel_Feed::init();
 
         CDV_REST_API::init();
         CDV_Ajax_Handlers::init();
