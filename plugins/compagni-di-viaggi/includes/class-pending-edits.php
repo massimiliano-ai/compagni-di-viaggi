@@ -177,7 +177,7 @@ class CDV_Pending_Edits {
 
         // Now RESTORE all original values
         // Restore post title and content (unhook to avoid recursion)
-        remove_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 10);
+        remove_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 999);
 
         wp_update_post(array(
             'ID' => $post_id,
@@ -185,7 +185,7 @@ class CDV_Pending_Edits {
             'post_content' => self::$original_data['post_content'],
         ), false, false); // false, false = don't fire hooks
 
-        add_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 10, 2);
+        add_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 999, 2);
 
         // Restore all original meta values
         foreach (self::$original_data['meta'] as $meta_key => $meta_value) {
