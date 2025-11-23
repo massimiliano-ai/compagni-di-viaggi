@@ -101,6 +101,20 @@ function cdv_enqueue_scripts() {
             )
         ));
     }
+
+    // Interest Groups System (page template: gruppi-interesse)
+    if (is_page_template('page-gruppi-interesse.php')) {
+        wp_enqueue_style('cdv-groups', get_template_directory_uri() . '/assets/css/groups.css', array(), CDV_THEME_VERSION);
+
+        wp_enqueue_script('cdv-groups', get_template_directory_uri() . '/assets/js/groups.js', array('jquery'), CDV_THEME_VERSION, true);
+
+        wp_localize_script('cdv-groups', 'cdvGroups', array(
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('cdv_groups_nonce'),
+            'viaggiUrl' => home_url('/archivio-viaggi/'),
+            'maxGroups' => 3
+        ));
+    }
 }
 add_action('wp_enqueue_scripts', 'cdv_enqueue_scripts');
 

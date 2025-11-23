@@ -107,6 +107,9 @@ class Compagni_Di_Viaggi {
         require_once CDV_PLUGIN_DIR . 'includes/class-user-preferences.php';
         require_once CDV_PLUGIN_DIR . 'includes/class-matching-algorithm.php';
 
+        // Interest Groups
+        require_once CDV_PLUGIN_DIR . 'includes/class-interest-groups.php';
+
         // REST API
         require_once CDV_PLUGIN_DIR . 'includes/api/class-rest-api.php';
         require_once CDV_PLUGIN_DIR . 'includes/api/class-jwt-auth.php';
@@ -160,6 +163,9 @@ class Compagni_Di_Viaggi {
         // Matching System
         CDV_User_Preferences::init();
         CDV_Matching_Algorithm::init();
+
+        // Interest Groups
+        CDV_Interest_Groups::init();
 
         CDV_REST_API::init();
         CDV_Ajax_Handlers::init();
