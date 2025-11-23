@@ -116,7 +116,8 @@ function cdv_enqueue_scripts() {
         ));
     }
 
-    // Travel Feed System (page template: feed-viaggi)
+    // Travel Feed System (page template: feed-viaggi) - TEMPORARILY DISABLED
+    /*
     if (is_page_template('page-feed-viaggi.php')) {
         wp_enqueue_style('cdv-feed', get_template_directory_uri() . '/assets/css/feed.css', array(), CDV_THEME_VERSION);
 
@@ -128,6 +129,7 @@ function cdv_enqueue_scripts() {
             'isLoggedIn' => is_user_logged_in()
         ));
     }
+    */
 }
 add_action('wp_enqueue_scripts', 'cdv_enqueue_scripts');
 
