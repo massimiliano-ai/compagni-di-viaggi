@@ -45,6 +45,7 @@ class CDV_Pending_Edits {
      * Store original data before edits
      */
     private static $original_data = null;
+    private static $new_data = null;
     private static $pending_edit_flag = false;
 
     /**
@@ -74,6 +75,13 @@ class CDV_Pending_Edits {
 
         // Get the original travel data
         $original_post = get_post($postarr['ID']);
+
+        // Store the NEW data (what user submitted) BEFORE we block it
+        self::$new_data = array(
+            'post_id' => $postarr['ID'],
+            'post_title' => $data['post_title'],
+            'post_content' => $data['post_content']
+        );
 
         // Store ALL original data (post + meta) for later restoration
         self::$original_data = array(
@@ -146,13 +154,10 @@ class CDV_Pending_Edits {
             }
         }
 
-        // Get new post data from database (in case it was updated despite our interception)
-        $current_post = get_post($post_id);
-
-        // Build complete pending data
+        // Build complete pending data using the NEW data we captured
         $pending_data = array(
-            'post_title' => $current_post->post_title,
-            'post_content' => $current_post->post_content,
+            'post_title' => self::$new_data['post_title'],
+            'post_content' => self::$new_data['post_content'],
             'meta' => $pending_meta,
             'submitted_at' => current_time('mysql'),
             'submitted_by' => get_current_user_id()
@@ -162,20 +167,16 @@ class CDV_Pending_Edits {
         update_post_meta($post_id, 'cdv_pending_edits', $pending_data);
 
         // Now RESTORE all original values
-        // First, restore post title and content if they were changed
-        if ($current_post->post_title !== self::$original_data['post_title'] ||
-            $current_post->post_content !== self::$original_data['post_content']) {
+        // Restore post title and content (unhook to avoid recursion)
+        remove_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 10);
 
-            remove_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 10);
+        wp_update_post(array(
+            'ID' => $post_id,
+            'post_title' => self::$original_data['post_title'],
+            'post_content' => self::$original_data['post_content'],
+        ), false, false); // false, false = don't fire hooks
 
-            wp_update_post(array(
-                'ID' => $post_id,
-                'post_title' => self::$original_data['post_title'],
-                'post_content' => self::$original_data['post_content'],
-            ), false, false); // false, false = don't fire hooks
-
-            add_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 10, 2);
-        }
+        add_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 10, 2);
 
         // Restore all original meta values
         foreach (self::$original_data['meta'] as $meta_key => $meta_value) {
@@ -195,6 +196,7 @@ class CDV_Pending_Edits {
 
         // Clear the flags
         self::$original_data = null;
+        self::$new_data = null;
         self::$pending_edit_flag = false;
     }
 
