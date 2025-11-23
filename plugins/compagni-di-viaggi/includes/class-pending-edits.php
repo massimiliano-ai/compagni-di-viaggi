@@ -22,8 +22,8 @@ class CDV_Pending_Edits {
         // Hook into save process (before actual save)
         add_filter('wp_insert_post_data', array(__CLASS__, 'intercept_travel_edit'), 99, 2);
 
-        // Save pending edits meta after interception
-        add_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 10, 2);
+        // Save pending edits meta after interception (VERY LATE - after ACF saves)
+        add_action('save_post_viaggio', array(__CLASS__, 'save_pending_edits_meta'), 999, 2);
 
         // Admin interface
         add_action('add_meta_boxes', array(__CLASS__, 'add_pending_edits_meta_box'));
@@ -149,7 +149,8 @@ class CDV_Pending_Edits {
             // Only store if changed from original
             $original_value = isset(self::$original_data['meta'][$key]) ? self::$original_data['meta'][$key] : null;
 
-            if ($new_value !== $original_value) {
+            // Compare values (handle arrays and serialized data)
+            if (!self::values_are_equal($new_value, $original_value)) {
                 $pending_meta[$key] = $new_value;
             }
         }
@@ -162,6 +163,14 @@ class CDV_Pending_Edits {
             'submitted_at' => current_time('mysql'),
             'submitted_by' => get_current_user_id()
         );
+
+        // Debug: Log what we're saving
+        error_log('CDV Pending Edits - Saving for post ' . $post_id);
+        error_log('Title change: "' . self::$original_data['post_title'] . '" -> "' . self::$new_data['post_title'] . '"');
+        error_log('Meta changes: ' . count($pending_meta) . ' fields');
+        foreach ($pending_meta as $key => $val) {
+            error_log('  - ' . $key . ': ' . (is_array($val) ? json_encode($val) : $val));
+        }
 
         // Save pending edits to post meta (use direct query to avoid recursion)
         update_post_meta($post_id, 'cdv_pending_edits', $pending_data);
@@ -213,6 +222,37 @@ class CDV_Pending_Edits {
      */
     public static function get_pending_edits($post_id) {
         return get_post_meta($post_id, 'cdv_pending_edits', true);
+    }
+
+    /**
+     * Compare two values for equality (handles arrays, serialized data, etc.)
+     */
+    private static function values_are_equal($value1, $value2) {
+        // If both null or empty, consider equal
+        if (empty($value1) && empty($value2)) {
+            return true;
+        }
+
+        // If one is empty and other isn't, not equal
+        if (empty($value1) || empty($value2)) {
+            return false;
+        }
+
+        // If both are arrays, compare recursively
+        if (is_array($value1) && is_array($value2)) {
+            return $value1 === $value2;
+        }
+
+        // If one is array and other isn't, try to serialize for comparison
+        if (is_array($value1)) {
+            $value1 = maybe_serialize($value1);
+        }
+        if (is_array($value2)) {
+            $value2 = maybe_serialize($value2);
+        }
+
+        // Standard comparison
+        return $value1 === $value2;
     }
 
     /**
