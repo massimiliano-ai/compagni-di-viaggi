@@ -343,6 +343,15 @@ class CDV_Admin {
         );
 
         add_meta_box(
+            'cdv_travel_additional_details',
+            'Dettagli Aggiuntivi (Facoltativi)',
+            array(__CLASS__, 'travel_additional_details_meta_box'),
+            'viaggio',
+            'normal',
+            'default'
+        );
+
+        add_meta_box(
             'cdv_travel_participants',
             'Partecipanti',
             array(__CLASS__, 'travel_participants_meta_box'),
@@ -409,6 +418,96 @@ class CDV_Admin {
     }
 
     /**
+     * Travel additional details meta box
+     */
+    public static function travel_additional_details_meta_box($post) {
+        $transport = get_post_meta($post->ID, 'cdv_travel_transport', true);
+        $accommodation = get_post_meta($post->ID, 'cdv_travel_accommodation', true);
+        $difficulty = get_post_meta($post->ID, 'cdv_travel_difficulty', true);
+        $meals = get_post_meta($post->ID, 'cdv_travel_meals', true);
+        $guide_type = get_post_meta($post->ID, 'cdv_travel_guide_type', true);
+        $requirements = get_post_meta($post->ID, 'cdv_travel_requirements', true);
+
+        if (!is_array($transport)) {
+            $transport = array();
+        }
+        ?>
+        <p class="description">Questi dettagli aiutano i viaggiatori a capire meglio il viaggio</p>
+        <table class="form-table">
+            <tr>
+                <th><label>🚗 Mezzi di Trasporto</label></th>
+                <td>
+                    <fieldset>
+                        <label><input type="checkbox" name="cdv_travel_transport[]" value="aereo" <?php checked(in_array('aereo', $transport)); ?>> ✈️ Aereo</label><br>
+                        <label><input type="checkbox" name="cdv_travel_transport[]" value="treno" <?php checked(in_array('treno', $transport)); ?>> 🚂 Treno</label><br>
+                        <label><input type="checkbox" name="cdv_travel_transport[]" value="bus" <?php checked(in_array('bus', $transport)); ?>> 🚌 Bus</label><br>
+                        <label><input type="checkbox" name="cdv_travel_transport[]" value="nave" <?php checked(in_array('nave', $transport)); ?>> 🚢 Nave/Traghetto</label><br>
+                        <label><input type="checkbox" name="cdv_travel_transport[]" value="auto_noleggio" <?php checked(in_array('auto_noleggio', $transport)); ?>> 🚗 Auto a noleggio</label><br>
+                        <label><input type="checkbox" name="cdv_travel_transport[]" value="auto_propria" <?php checked(in_array('auto_propria', $transport)); ?>> 🚙 Auto propria</label>
+                    </fieldset>
+                </td>
+            </tr>
+            <tr>
+                <th><label for="cdv_travel_accommodation">🏨 Tipologia Alloggio</label></th>
+                <td>
+                    <select name="cdv_travel_accommodation" id="cdv_travel_accommodation" class="regular-text">
+                        <option value="">- Seleziona -</option>
+                        <option value="hotel" <?php selected($accommodation, 'hotel'); ?>>Hotel</option>
+                        <option value="ostello" <?php selected($accommodation, 'ostello'); ?>>Ostello</option>
+                        <option value="appartamento" <?php selected($accommodation, 'appartamento'); ?>>Appartamento</option>
+                        <option value="bed_breakfast" <?php selected($accommodation, 'bed_breakfast'); ?>>Bed & Breakfast</option>
+                        <option value="campeggio" <?php selected($accommodation, 'campeggio'); ?>>Campeggio</option>
+                        <option value="altro" <?php selected($accommodation, 'altro'); ?>>Altro</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th><label for="cdv_travel_difficulty">📈 Livello di Difficoltà</label></th>
+                <td>
+                    <select name="cdv_travel_difficulty" id="cdv_travel_difficulty" class="regular-text">
+                        <option value="">- Seleziona -</option>
+                        <option value="facile" <?php selected($difficulty, 'facile'); ?>>Facile - Per tutti</option>
+                        <option value="moderato" <?php selected($difficulty, 'moderato'); ?>>Moderato - Richiede una buona forma fisica</option>
+                        <option value="impegnativo" <?php selected($difficulty, 'impegnativo'); ?>>Impegnativo - Per persone allenate</option>
+                        <option value="estremo" <?php selected($difficulty, 'estremo'); ?>>Estremo - Solo per esperti</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th><label for="cdv_travel_meals">🍽️ Pasti</label></th>
+                <td>
+                    <select name="cdv_travel_meals" id="cdv_travel_meals" class="regular-text">
+                        <option value="">- Seleziona -</option>
+                        <option value="nessuno" <?php selected($meals, 'nessuno'); ?>>Pasti non inclusi</option>
+                        <option value="colazione" <?php selected($meals, 'colazione'); ?>>Solo colazione inclusa</option>
+                        <option value="mezza_pensione" <?php selected($meals, 'mezza_pensione'); ?>>Mezza pensione</option>
+                        <option value="pensione_completa" <?php selected($meals, 'pensione_completa'); ?>>Pensione completa</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th><label for="cdv_travel_guide_type">👥 Organizzazione</label></th>
+                <td>
+                    <select name="cdv_travel_guide_type" id="cdv_travel_guide_type" class="regular-text">
+                        <option value="">- Seleziona -</option>
+                        <option value="guida_locale" <?php selected($guide_type, 'guida_locale'); ?>>Con guida locale</option>
+                        <option value="autogestito" <?php selected($guide_type, 'autogestito'); ?>>Autogestito dal gruppo</option>
+                        <option value="tour_organizzato" <?php selected($guide_type, 'tour_organizzato'); ?>>Tour organizzato</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th><label for="cdv_travel_requirements">📝 Requisiti e Note Particolari</label></th>
+                <td>
+                    <textarea name="cdv_travel_requirements" id="cdv_travel_requirements" rows="4" class="large-text"><?php echo esc_textarea($requirements); ?></textarea>
+                    <p class="description">Es: Documenti necessari (visto, passaporto), vaccinazioni richieste, equipaggiamento speciale, requisiti fisici specifici...</p>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
      * Travel participants meta box
      */
     public static function travel_participants_meta_box($post) {
@@ -459,12 +558,29 @@ class CDV_Admin {
             'cdv_budget',
             'cdv_max_participants',
             'cdv_travel_status',
+            'cdv_travel_accommodation',
+            'cdv_travel_difficulty',
+            'cdv_travel_meals',
+            'cdv_travel_guide_type',
         );
 
         foreach ($fields as $field) {
             if (isset($_POST[$field])) {
                 update_post_meta($post_id, $field, sanitize_text_field($_POST[$field]));
             }
+        }
+
+        // Handle transport array (checkboxes)
+        if (isset($_POST['cdv_travel_transport']) && is_array($_POST['cdv_travel_transport'])) {
+            $transport = array_map('sanitize_text_field', $_POST['cdv_travel_transport']);
+            update_post_meta($post_id, 'cdv_travel_transport', $transport);
+        } else {
+            delete_post_meta($post_id, 'cdv_travel_transport');
+        }
+
+        // Handle requirements textarea
+        if (isset($_POST['cdv_travel_requirements'])) {
+            update_post_meta($post_id, 'cdv_travel_requirements', wp_kses_post($_POST['cdv_travel_requirements']));
         }
     }
 
