@@ -200,13 +200,23 @@ class CDV_Pending_Edits {
         // Send notification to admin
         self::notify_admin_new_edits($post_id);
 
-        // Set user notification
-        set_transient('cdv_pending_edits_notice_' . get_current_user_id(), $post_id, 60);
+        // Set redirect parameter for user notification (instead of transient)
+        add_filter('redirect_post_location', array(__CLASS__, 'add_pending_notice_param'), 10, 2);
 
         // Clear the flags
         self::$original_data = null;
         self::$new_data = null;
         self::$pending_edit_flag = false;
+    }
+
+    /**
+     * Add pending edits notice parameter to redirect URL
+     */
+    public static function add_pending_notice_param($location, $post_id) {
+        // Remove the filter to avoid affecting other redirects
+        remove_filter('redirect_post_location', array(__CLASS__, 'add_pending_notice_param'), 10);
+
+        return add_query_arg('cdv_pending_submitted', '1', $location);
     }
 
     /**
@@ -566,19 +576,21 @@ class CDV_Pending_Edits {
      * Show admin notice after submitting edits
      */
     public static function pending_edits_notice() {
-        $user_id = get_current_user_id();
-        $post_id = get_transient('cdv_pending_edits_notice_' . $user_id);
+        // Check if we're on edit screen and have the pending submitted parameter
+        $screen = get_current_screen();
+        if (!$screen || $screen->id !== 'viaggio') {
+            return;
+        }
 
-        if ($post_id) {
+        if (isset($_GET['cdv_pending_submitted']) && $_GET['cdv_pending_submitted'] === '1') {
             ?>
             <div class="notice notice-success is-dismissible">
                 <p>
-                    <strong>Le tue modifiche sono state inviate per la revisione.</strong><br>
+                    <strong>✓ Le tue modifiche sono state inviate per la revisione.</strong><br>
                     Il viaggio rimarrà visibile con i dati attuali fino all'approvazione da parte di un amministratore.
                 </p>
             </div>
             <?php
-            delete_transient('cdv_pending_edits_notice_' . $user_id);
         }
     }
 
